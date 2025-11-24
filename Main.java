@@ -1378,6 +1378,59 @@ private static void testReflection() {
     } catch (IllegalArgumentException e) {
         System.out.println("   Корректно обработана ошибка неправильных границ: " + e.getMessage());
     }
+    
+    
+System.out.println("\n7. Тестирование чтения с рефлексией:");
+
+// Тестирование чтения из бинарного потока с рефлексией
+System.out.println("   Чтение ArrayTabulatedFunction из бинарного потока:");
+try {
+    // Создаем временный файл для тестирования
+    String tempFile = "test_reflection_binary.dat";
+    TabulatedFunction original = TabulatedFunctions.createTabulatedFunction(
+        ArrayTabulatedFunction.class, 0.0, 10.0, new double[] {0.0, 5.0, 10.0});
+    
+    try (FileOutputStream out = new FileOutputStream(tempFile)) {
+        TabulatedFunctions.outputTabulatedFunction(original, out);
+    }
+    
+    TabulatedFunction readFunction;
+    try (FileInputStream in = new FileInputStream(tempFile)) {
+        readFunction = TabulatedFunctions.inputTabulatedFunction(
+            ArrayTabulatedFunction.class, in);
+    }
+    System.out.println("   Прочитанная функция: " + readFunction);
+    System.out.println("   Класс: " + readFunction.getClass().getSimpleName());
+    
+    Files.deleteIfExists(Paths.get(tempFile));
+} catch (Exception e) {
+    System.out.println("   Ошибка: " + e.getMessage());
+}
+
+// Тестирование чтения из текстового потока с рефлексией
+System.out.println("   Чтение LinkedListTabulatedFunction из текстового потока:");
+try {
+    // Создаем временный файл для тестирования
+    String tempFile = "test_reflection_text.txt";
+    TabulatedFunction original = TabulatedFunctions.createTabulatedFunction(
+        LinkedListTabulatedFunction.class, 0.0, 10.0, new double[] {0.0, 25.0, 100.0});
+    
+    try (FileWriter out = new FileWriter(tempFile)) {
+        TabulatedFunctions.writeTabulatedFunction(original, out);
+    }
+    
+    TabulatedFunction readFunction;
+    try (FileReader in = new FileReader(tempFile)) {
+        readFunction = TabulatedFunctions.readTabulatedFunction(
+            LinkedListTabulatedFunction.class, in);
+    }
+    System.out.println("   Прочитанная функция: " + readFunction);
+    System.out.println("   Класс: " + readFunction.getClass().getSimpleName());
+    
+    Files.deleteIfExists(Paths.get(tempFile));
+} catch (Exception e) {
+    System.out.println("   Ошибка: " + e.getMessage());
+}
 }
 
     public static void main(String[] args) {

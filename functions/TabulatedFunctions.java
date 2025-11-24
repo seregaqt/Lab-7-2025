@@ -139,7 +139,6 @@ public static TabulatedFunction tabulate(Class<?> functionClass, Function functi
         return tabulate(function, leftX, rightX, 20);
     }
     
-    // Остальные методы остаются без изменений
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) {
         DataOutputStream dataOut = new DataOutputStream(out);
         try {
@@ -240,6 +239,75 @@ public static TabulatedFunction tabulate(Class<?> functionClass, Function functi
             points[i] = new FunctionPoint(xValues[i], yValues[i]);
         }
         return createTabulatedFunction(points);
+        
+    } catch (IOException e) {
+        throw new RuntimeException("Ошибка при чтении функции из символьного потока", e);
+    }
+    }
+    
+    //Методы чтения через рефлексию
+    // Перегруженные методы чтения с рефлексией
+public static TabulatedFunction inputTabulatedFunction(Class<?> functionClass, InputStream in) {
+    DataInputStream dataIn = new DataInputStream(in);
+    try {
+        int pointsCount = dataIn.readInt();
+        double[] xValues = new double[pointsCount];
+        double[] yValues = new double[pointsCount];
+        
+        for (int i = 0; i < pointsCount; i++) {
+            xValues[i] = dataIn.readDouble();
+            yValues[i] = dataIn.readDouble();
+        }
+        
+        // Используем рефлексию для создания объекта указанного класса
+        return createTabulatedFunction(functionClass, xValues, yValues);
+        
+    } catch (IOException e) {
+        throw new RuntimeException("Ошибка при чтении функции из потока", e);
+    }
+}
+
+public static TabulatedFunction readTabulatedFunction(Class<?> functionClass, Reader in) {
+    StreamTokenizer tokenizer = new StreamTokenizer(in);
+    try {
+        tokenizer.resetSyntax();
+        tokenizer.wordChars('0', '9');
+        tokenizer.wordChars('.', '.');
+        tokenizer.wordChars('-', '-');
+        tokenizer.wordChars('e', 'e');
+        tokenizer.wordChars('E', 'E');
+        tokenizer.whitespaceChars(' ', ' ');
+        tokenizer.whitespaceChars('\t', '\t');
+        tokenizer.whitespaceChars('\n', '\n');
+        tokenizer.whitespaceChars('\r', '\r');
+        tokenizer.parseNumbers();
+        
+        if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+            throw new RuntimeException("Ожидалось количество точек");
+        }
+        int pointsCount = (int) tokenizer.nval;
+        
+        if (pointsCount < 2) {
+            throw new RuntimeException("Некорректное количество точек: " + pointsCount);
+        }
+        
+        double[] xValues = new double[pointsCount];
+        double[] yValues = new double[pointsCount];
+        
+        for (int i = 0; i < pointsCount; i++) {
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                throw new RuntimeException("Ожидалась x-координата точки " + i);
+            }
+            xValues[i] = tokenizer.nval;
+            
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                throw new RuntimeException("Ожидалась y-координата точки " + i);
+            }
+            yValues[i] = tokenizer.nval;
+        }
+        
+        // Используем рефлексию для создания объекта указанного класса
+        return createTabulatedFunction(functionClass, xValues, yValues);
         
     } catch (IOException e) {
         throw new RuntimeException("Ошибка при чтении функции из символьного потока", e);
